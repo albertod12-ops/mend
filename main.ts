@@ -904,8 +904,12 @@ function run(args: string[]): { code: number; out: string[] } {
     rows.push({ key: p, text: `${was === null ? 'A' : now === null ? 'D' : 'M'} ${p}` });
   }
   rows.sort((a, b) => Buffer.compare(Buffer.from(a.key), Buffer.from(b.key)));
+  // Write in byte order of the paths, as the kit starter's run() does
+  // (rows are printed in that order too): in the ordinary case the order
+  // is invisible, but when a write fails midway the files already written
+  // are the sorted prefix, which is what the reference leaves behind.
   if (!check) {
-    for (const p of [...tree.now.keys()]) {
+    for (const p of [...tree.now.keys()].sort((a, b) => Buffer.compare(Buffer.from(a), Buffer.from(b)))) {
       const was = tree.original(p);
       const now = tree.now.get(p)!;
       if (was === now) continue;
