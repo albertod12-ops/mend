@@ -694,6 +694,16 @@ function parseV4a(lines: string[], strict: boolean): Edit[] {
       while (i < last) {
         const l = lines[i]!;
         if (SECTION_START(l)) break;
+        // A blank line with no chunk open, after at least one chunk (i.e.
+        // after `*** End of File` closed it), is a blank line at the end of
+        // the section (SPEC.md 8: not part of it) — skip it. A blank line
+        // before the first chunk is that chunk's first body line instead
+        // (an empty context line), and a blank line inside an open chunk
+        // is one of its body lines, so neither is skipped here.
+        if (l === '' && cur === null && chunks.length > 0) {
+          i += 1;
+          continue;
+        }
         if (l === '*** End of File') {
           if (cur === null) throw new Exit2(`error: parse ${i + 1}`);
           cur.eof = true;
